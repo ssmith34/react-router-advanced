@@ -1,4 +1,9 @@
-import { Form, useNavigate, useNavigation, useActionData } from "react-router-dom";
+import {
+	Form,
+	useNavigate,
+	useNavigation,
+	useActionData,
+} from "react-router-dom";
 
 import classes from "./EventForm.module.css";
 
@@ -7,7 +12,7 @@ function EventForm({ method, event }) {
 	const navigate = useNavigate();
 	const navigation = useNavigation();
 
-	const isSubmitting = navigation.state === 'submitting';
+	const isSubmitting = navigation.state === "submitting";
 
 	function cancelHandler() {
 		navigate("..");
@@ -15,9 +20,13 @@ function EventForm({ method, event }) {
 
 	return (
 		<Form method={method} className={classes.form}>
-			{data && data.errors && <ul>
-				{Object.values(data.errors).map(err => <li key={err}>{err}</li>)}
-				</ul>}
+			{data && data.errors && (
+				<ul>
+					{Object.values(data.errors).map(err => (
+						<li key={err}>{err}</li>
+					))}
+				</ul>
+			)}
 			<p>
 				<label htmlFor="title">Title</label>
 				<input
@@ -63,7 +72,7 @@ function EventForm({ method, event }) {
 					Cancel
 				</button>
 				<button disabled={isSubmitting}>
-					{isSubmitting ? 'Submitting...' : 'Save'}
+					{isSubmitting ? "Submitting..." : "Save"}
 				</button>
 			</div>
 		</Form>
@@ -72,32 +81,39 @@ function EventForm({ method, event }) {
 
 export default EventForm;
 
-export async function action({ action, params }) {
+export async function action({ request, params }) {
 	const method = request.method;
 	const data = await request.formData();
 
 	const eventData = {
-	title: data.get('title'),
-	image: data.get('image'),
-	date: data.get('date'),
-	description: data.get('description'),
-};
+		title: data.get("title"),
+		image: data.get("image"),
+		date: data.get("date"),
+		description: data.get("description"),
+	};
 
-const response = await fetch('http://localhost:8080/events', {
-	method: 'POST',
-	headers: {
-		'Content-Type': 'application/json',
-	},
-	body: JSON.stringify(eventData),
-});
+	let url = "http://localhost:8080/events";
 
-if (response.status === 422) {
-	return response;
-}
+	if (method === "patch") {
+		const eventId = params.eventId;
+		url = "http://localhost:8080/events/" + eventId;
+	}
 
-if (!response.ok) {
-	throw json({ message: 'Could not save event.'}, { status: 500 });
-}
+	const response = await fetch(url, {
+		method: method,
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify(eventData),
+	});
 
-return redirect('/events');
+	if (response.status === 422) {
+		return response;
+	}
+
+	if (!response.ok) {
+		throw json({ message: "Could not save event." }, { status: 500 });
+	}
+
+	return redirect("/events");
 }
